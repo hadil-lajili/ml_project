@@ -25,3 +25,6 @@ all:
 ci: format quality security
 
 run: prepare train evaluate
+
+api:
+	uvicorn app:app --reload --host 0.0.0.0 --port 8000
