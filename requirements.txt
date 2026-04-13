@@ -1,0 +1,9 @@
+pandas
+scikit-learn
+matplotlib
+seaborn
+jupyter
+joblib
+flake8
+black
+bandit
