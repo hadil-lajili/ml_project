@@ -1,10 +1,11 @@
 import pandas as pd
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score, classification_report
 import joblib
-
+import os
 
 def prepare_data(filepath):
     df = pd.read_csv(filepath)
@@ -23,25 +24,23 @@ def prepare_data(filepath):
     print("Données prêtes !")
     return X_train, X_test, y_train, y_test, scaler
 
-
-def train_model(X_train, y_train):
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
+def train_model(X_train, y_train, n_estimators=100, random_state=42):
+    model = RandomForestClassifier(
+        n_estimators=n_estimators, random_state=random_state
+    )
     model.fit(X_train, y_train)
     print("Modèle entraîné !")
     return model
-
 
 def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)
     print("Accuracy :", accuracy_score(y_test, y_pred))
     print(classification_report(y_test, y_pred))
 
-
 def save_model(model, scaler):
     joblib.dump(model, "model.pkl")
     joblib.dump(scaler, "scaler.pkl")
     print("Modèle sauvegardé !")
-
 
 def load_model():
     model = joblib.load("model.pkl")
