@@ -28,3 +28,6 @@ run: prepare train evaluate
 
 api:
 	uvicorn app:app --reload --host 0.0.0.0 --port 8000
+
+mlflow:
+	mlflow ui --host 0.0.0.0 --port 5000

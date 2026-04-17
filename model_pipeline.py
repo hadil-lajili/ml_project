@@ -2,8 +2,10 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import joblib
+import mlflow
+import mlflow.sklearn
 
 
 def prepare_data(filepath):
@@ -30,14 +32,23 @@ def train_model(X_train, y_train, n_estimators=100, random_state=42):
         random_state=random_state
     )
     model.fit(X_train, y_train)
+    mlflow.log_param("n_estimators", n_estimators)
+    mlflow.log_param("random_state", random_state)
     print("Modèle entraîné !")
     return model
 
 
 def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)
-    print("Accuracy :", accuracy_score(y_test, y_pred))
-    print(classification_report(y_test, y_pred))
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred)
+    recall = recall_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred)
+    print("Accuracy  :", round(accuracy, 4))
+    print("Precision :", round(precision, 4))
+    print("Recall    :", round(recall, 4))
+    print("F1-Score  :", round(f1, 4))
+    return accuracy, precision, recall, f1
 
 
 def save_model(model, scaler):
