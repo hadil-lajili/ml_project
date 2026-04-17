@@ -31,3 +31,13 @@ api:
 
 mlflow:
 	mlflow ui --host 0.0.0.0 --port 5000
+
+docker-build:
+	docker build -t hadil_lajili_wiem_saafi_4ds2_mlops .
+
+docker-run:
+	docker run -d -p 8000:8000 --name churn_api hadil_lajili_wiem_saafi_4ds2_mlops
+
+docker-push:
+	docker push lajilihadil/hadil_lajili_wiem_saafi_4ds2_mlops
+
