@@ -1,4 +1,4 @@
-import pandas as pd
+﻿import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
@@ -6,7 +6,17 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 import joblib
 import mlflow
 import mlflow.sklearn
+from datetime import datetime
+from elasticsearch import Elasticsearch
 
+es = Elasticsearch("http://localhost:9200")
+
+def send_to_elasticsearch(data):
+    try:
+        es.index(index="mlflow-metrics", document=data)
+        print("Logs envoyés à Elasticsearch !")
+    except Exception as e:
+        print(f"Erreur Elasticsearch : {e}")
 
 def prepare_data(filepath):
     df = pd.read_csv(filepath)
@@ -25,7 +35,6 @@ def prepare_data(filepath):
     print("Données prêtes !")
     return X_train, X_test, y_train, y_test, scaler
 
-
 def train_model(X_train, y_train, n_estimators=100, random_state=42):
     model = RandomForestClassifier(
         n_estimators=n_estimators,
@@ -37,7 +46,6 @@ def train_model(X_train, y_train, n_estimators=100, random_state=42):
     print("Modèle entraîné !")
     return model
 
-
 def evaluate_model(model, X_test, y_test):
     y_pred = model.predict(X_test)
     accuracy = accuracy_score(y_test, y_pred)
@@ -48,14 +56,20 @@ def evaluate_model(model, X_test, y_test):
     print("Precision :", round(precision, 4))
     print("Recall    :", round(recall, 4))
     print("F1-Score  :", round(f1, 4))
+    log_data = {
+        "timestamp": datetime.now().isoformat(),
+        "accuracy": round(accuracy, 4),
+        "precision": round(precision, 4),
+        "recall": round(recall, 4),
+        "f1_score": round(f1, 4),
+    }
+    send_to_elasticsearch(log_data)
     return accuracy, precision, recall, f1
-
 
 def save_model(model, scaler):
     joblib.dump(model, "model.pkl")
     joblib.dump(scaler, "scaler.pkl")
     print("Modèle sauvegardé !")
-
 
 def load_model():
     model = joblib.load("model.pkl")
