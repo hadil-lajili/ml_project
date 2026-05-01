@@ -1,12 +1,20 @@
 from fastapi import FastAPI, HTTPException, Security
 from fastapi.security import APIKeyHeader
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import numpy as np
 from model_pipeline import load_model, prepare_data, train_model, save_model
 
 app = FastAPI()
 
-# Clé secrète
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 API_KEY = "mon_secret_mlops_2026"
 api_key_header = APIKeyHeader(name="X-API-Key")
 
