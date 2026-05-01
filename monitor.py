@@ -14,6 +14,7 @@ SEUIL_CPU      = 80.0
 SEUIL_RAM      = 90.0
 SEUIL_ACCURACY = 0.80
 LOG_FILE       = "alerts.log"
+INTERVALLE     = 30
 
 def write_alert(message):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -46,8 +47,8 @@ def check_model_accuracy():
             X, y, test_size=0.2, random_state=42, stratify=y
         )
         X_test_scaled = scaler.transform(X_test)
-        y_pred    = model.predict(X_test_scaled)
-        accuracy  = round(accuracy_score(y_test, y_pred), 4)
+        y_pred   = model.predict(X_test_scaled)
+        accuracy = round(accuracy_score(y_test, y_pred), 4)
         return accuracy
     except Exception as e:
         print("Erreur accuracy :", e)
@@ -55,30 +56,24 @@ def check_model_accuracy():
 
 def check_alerts(metrics, accuracy):
     alerts = []
-
     if metrics["cpu_percent"] > SEUIL_CPU:
         msg = f"CPU critique : {metrics['cpu_percent']}% > {SEUIL_CPU}%"
         write_alert(msg)
         alerts.append(msg)
-
     if metrics["ram_percent"] > SEUIL_RAM:
         msg = f"RAM critique : {metrics['ram_percent']}% > {SEUIL_RAM}%"
         write_alert(msg)
         alerts.append(msg)
-
     if metrics["disk_percent"] > 95:
-        msg = f"Disque critique : {metrics['disk_percent']}% utilisé !"
+        msg = f"Disque critique : {metrics['disk_percent']}% utilise !"
         write_alert(msg)
         alerts.append(msg)
-
     if accuracy is not None and accuracy < SEUIL_ACCURACY:
         msg = f"Accuracy trop basse : {accuracy} < {SEUIL_ACCURACY}"
         write_alert(msg)
         alerts.append(msg)
-
     if not alerts:
         print(f"[OK] {datetime.now().strftime('%H:%M:%S')} -> Tout va bien !")
-
     return alerts
 
 def send_to_elasticsearch(metrics, accuracy, alerts):
@@ -93,20 +88,20 @@ def send_to_elasticsearch(metrics, accuracy, alerts):
             "alertes"     : alerts,
         }
         es.index(index="monitoring-alertes", document=doc)
-        print("Données envoyées à Elasticsearch !")
+        print("Donnees envoyees a Elasticsearch !")
     except Exception as e:
         print("Erreur Elasticsearch :", e)
 
-if __name__ == "__main__":
+def run_monitoring():
+    compteur = 1
     print("=" * 50)
-    print("Démarrage du monitoring avec alertes...")
-    print(f"Seuil CPU      : {SEUIL_CPU}%")
-    print(f"Seuil RAM      : {SEUIL_RAM}%")
-    print(f"Seuil Accuracy : {SEUIL_ACCURACY}")
+    print("Monitoring continu demarre !")
+    print(f"Verification toutes les {INTERVALLE} secondes")
+    print("Appuyez sur Ctrl+C pour arreter")
     print("=" * 50)
 
-    for i in range(5):
-        print(f"\n--- Vérification {i+1}/5 ---")
+    while True:
+        print(f"\n--- Verification {compteur} ---")
         metrics  = get_system_metrics()
         accuracy = check_model_accuracy()
 
@@ -116,6 +111,13 @@ if __name__ == "__main__":
 
         alerts = check_alerts(metrics, accuracy)
         send_to_elasticsearch(metrics, accuracy, alerts)
-        time.sleep(3)
 
-    print("\nMonitoring terminé ! Vérifiez alerts.log")
+        compteur += 1
+        print(f"Prochaine verification dans {INTERVALLE} secondes...")
+        time.sleep(INTERVALLE)
+
+if __name__ == "__main__":
+    try:
+        run_monitoring()
+    except KeyboardInterrupt:
+        print("\nMonitoring arrete proprement !")
