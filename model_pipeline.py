@@ -39,13 +39,18 @@ def train_model(X_train, y_train, n_estimators=200, random_state=42):
     model = RandomForestClassifier(
         n_estimators=n_estimators,
         random_state=random_state,
-        class_weight='balanced',
+        class_weight="balanced",
         max_depth=10,
         min_samples_split=5
     )
     model.fit(X_train, y_train)
-    mlflow.log_param("n_estimators", n_estimators)
-    mlflow.log_param("random_state", random_state)
+    # Log seulement si un run MLflow est actif
+    try:
+        if mlflow.active_run():
+            mlflow.log_param("n_estimators", n_estimators)
+            mlflow.log_param("random_state", random_state)
+    except Exception as e:
+        print(f"MLflow log ignoré : {e}")
     print("Modèle entraîné !")
     return model
 
