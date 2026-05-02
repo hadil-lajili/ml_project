@@ -112,3 +112,49 @@ def retrain(params: RetrainData, api_key: str = Security(verify_api_key)):
         return {"message": "Modele reentraine avec succes !", "n_estimators": params.n_estimators}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/history")
+def get_history(api_key: str = Security(verify_api_key)):
+    try:
+        result = es.search(index="predictions-history", body={
+            "size": 100,
+            "sort": [{"timestamp": {"order": "desc"}}],
+            "query": {"match_all": {}}
+        })
+        predictions = []
+        for hit in result["hits"]["hits"]:
+            s = hit["_source"]
+            predictions.append({
+                "time": s.get("timestamp", ""),
+                "age": s.get("age", 0),
+                "country": s.get("geography", ""),
+                "balance": s.get("balance", 0),
+                "result": s.get("result", ""),
+                "prob": s.get("probability", 0)
+            })
+        return {"predictions": predictions, "total": len(predictions)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))    
+
+@app.get("/monitoring")
+def get_monitoring(api_key: str = Security(verify_api_key)):
+    try:
+        result = es.search(index="monitoring-alertes", body={
+            "size": 30,
+            "sort": [{"timestamp": {"order": "desc"}}],
+            "query": {"match_all": {}}
+        })
+        metrics = []
+        for hit in result["hits"]["hits"]:
+            s = hit["_source"]
+            metrics.append({
+                "timestamp": s.get("timestamp", ""),
+                "accuracy": s.get("accuracy", 0),
+                "cpu_percent": s.get("cpu_percent", 0),
+                "ram_percent": s.get("ram_percent", 0),
+                "nb_alertes": s.get("nb_alertes", 0)
+            })
+        metrics.reverse()
+        return {"metrics": metrics}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))    
